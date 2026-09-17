@@ -114,7 +114,8 @@ taxi-bot-docker/
 ### 4. Сборка и запуск.
 1. Убедитесь, что в файле `.env` корректно указаны:
     - Данные SIP-провайдера (`SIP_DOMAIN`, `SIP_USER`, `SIP_PASS`, `PUBLIC_IP`).
-    - Адрес и учетные данные RunaWFE (`WFE_API_URL`, `WFE_LOGIN`, `WFE_PASS`). *Важно: URL должен содержать путь к API, например: `https://ваш-домен.ru/restapi`*.
+    - Адрес и учетные данные RunaWFE (`WFE_API_URL`, `WFE_LOGIN`, `WFE_PASS`). 
+    - *Важно: URL должен содержать путь к API, например: `https://ваш-домен.ru/restapi`*.
 2. Убедитесь, что в RunaWFE создана группа исполнителей "Водители" и развернут бизнес-процесс "Такси".
  
 Далее в корне проекта выполните
@@ -127,6 +128,8 @@ docker-compose up -d --build
     Windows: Убедитесь, что Брандмауэр Windows не блокирует порты Docker или WSL2.
     Linux: Проверьте, что порты открыты: sudo ufw allow 5060/udp и sudo ufw allow 4000:4100/udp (или настройте Security Group в облаке).
 
+
+### 4.Проблемы
 Если не работает после перезапуска, то:
 ```shell
 docker-compose down
