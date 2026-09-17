@@ -1,0 +1,86 @@
+
+services:
+  # C++ SIP Proxy
+  pjsip-proxy:
+    build:
+      context: ./pjsip_proxy
+      dockerfile: Dockerfile
+    container_name: pjsip-proxy
+    restart: unless-stopped
+    environment:
+      - SIP_DOMAIN=${SIP_DOMAIN:-******}
+      - SIP_USER=${SIP_USER:-******}
+      - SIP_PASS=${SIP_PASS:-your_password}
+      - SIP_PORT=${SIP_PORT:-5060}
+      - STUN_SERVER=${STUN_SERVER}
+      - SOCK_DIR=/tmp/sip_prox
+      - PUBLIC_IP=${PUBLIC_IP}
+    network_mode: host
+#    ports:
+#      - "5060:5060/udp"
+#      - "4000-4010:4000-4010/udp"
+    volumes:
+      - sip-sockets:/tmp/sip_prox
+    healthcheck:
+      test: ["CMD", "ls", "-la", "/tmp/sip_prox"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Java SIP Bot
+  sip-bot:
+    build:
+      context: ./runawfe-sip-bot
+      dockerfile: Dockerfile
+    container_name: sip-bot
+    restart: unless-stopped
+    depends_on:
+      pjsip-proxy:
+        condition: service_started
+      rhvoice:
+        condition: service_started
+    environment:
+      - APP_SOCK_DIR=/tmp/sip_prox
+      - VOSK_MODEL_DIR=/app/vosk-model
+      - APP_WFE_API_URL=${WFE_API_URL:-http://host.docker.internal:8080/restapi}
+      - APP_WFE_LOGIN=${WFE_LOGIN:-admin}
+      - APP_WFE_PASS=${WFE_PASS:-admin}
+      - APP_WAIT_MESSAGES=${WAIT_MESSAGES:-Подождите, пожалуйста...|Секунду, соединяю...|Уточняю информацию...}
+      - RHVOICE_BASE_URL=http://rhvoice:8080
+      - RHVOICE_VOICE=aleksandr
+      - RHVOICE_FORMAT=${RHVOICE_FORMAT}
+      - VOSK_MODEL_SILENCE_LAG=${VOSK_MODEL_SILENCE_LAG}
+    volumes:
+      - sip-sockets:/tmp/sip_prox
+      - ./vosk-model-ru-0.42:/app/vosk-model:ro
+    networks:
+      - sip-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # RhVoice TTS Service
+  rhvoice:
+    image: aculeasis/rhvoice-rest:latest
+    container_name: rhvoice
+    restart: unless-stopped
+    ports:
+      - "9876:8080"
+    networks:
+      - sip-net
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/say?text=test&format=wav')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  sip-sockets:
+    driver: local
+
+networks:
+  sip-net:
+    driver: bridge

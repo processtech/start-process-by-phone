@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: dialog-app
+  ai:
+    ollama:
+      base-url: http://face.umkikit.ru:11434/
+      chat:
+        options:
+          model: qwen3:1.7b
+logging:
+  file:
+    name: logs/app.log
+  level:
+    root: INFO
+server:
+  port: 8090
+tts:
+  type: rhvoice
+stt:
+  type: vosk
+rhvoice:
+  base-url: ${RHVOICE_BASE_URL:http://rhvoice:8080}
+vosk:
+  model:
+    # dir: ${VOSK_MODEL_DIR:/home/storage/Tools/vosk_models/vosk-model-small-ru-0.22/}
+    dir: ${VOSK_MODEL_DIR:/home/storage/Tools/vosk_models/vosk-model-ru-0.42/}
+    sample-rate: 8000
+  silence-lag: 888
+
+app:
+  udp:
+    audio-port: 7744
+    control-port: 7755
+  sock:
+    dir: /tmp/sip_prox/
+    control: _control
+  address-context: Россия, Костромская область, Чухлома
+  wait-messages: Секунду...|Отлично...|Хорошо...
+  wfe:
+    # Берем из переменной окружения, если нет - используем значение по умолчанию
+    login: ${WFE_LOGIN:Administrator}
+    pass: ${WFE_PASS:wf}
+    process-name: ${WFE_PROCESS_NAME:Такси}
+    api:
+      # Для Docker по умолчанию используем host.docker.internal, для локальной разработки можно оставить localhost
+      url: ${WFE_API_URL:http://host.docker.internal:8080/restapi}

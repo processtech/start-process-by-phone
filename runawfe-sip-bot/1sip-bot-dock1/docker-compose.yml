@@ -1,0 +1,26 @@
+version: "3.3"
+
+services:
+  rhvoice:
+    container_name: rhvoice
+    image: aculeasis/rhvoice-rest:latest
+    restart: unless-stopped
+    networks:
+      - sip-sys-network
+    ports:
+      - "9876:8080"
+
+  sip-app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    depends_on:
+      - rhvoice
+    networks:
+      - sip-sys-network
+    ports:
+      - "4000-4010:4000-4010"
+
+networks:
+  sip-sys-network:
+    driver: bridge
