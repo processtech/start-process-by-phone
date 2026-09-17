@@ -50,11 +50,19 @@ services:
       - RHVOICE_VOICE=aleksandr
       - RHVOICE_FORMAT=${RHVOICE_FORMAT}
       - VOSK_MODEL_SILENCE_LAG=${VOSK_MODEL_SILENCE_LAG}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - sip-sockets:/tmp/sip_prox
       - ./vosk-model-ru-0.42:/app/vosk-model:ro
     networks:
       - sip-net
+    healthcheck:
+      test: ["CMD-SHELL", "ls /tmp/sip_prox/_control > /dev/null 2>&1 && echo 'Socket OK' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s # Даем 2 минуты на загрузку тяжелой модели Vosk при старте
     logging:
       driver: "json-file"
       options:
@@ -73,7 +81,7 @@ services:
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/say?text=test&format=wav')"]
       interval: 30s
-      timeout: 10s
+      timeout: 22s
       retries: 3
       start_period: 60s
 
