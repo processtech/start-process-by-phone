@@ -121,6 +121,14 @@ docker-compose up -d --build
 
 
 ### 4.Проблемы
+Если запускаете локально на линуксе то надо знать что http://host.docker.internal:8080 по умолчанию не работает.
+В docker-compose есть настройка:
+```shell
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+```
+но она может не сработать тогда нужно будет прописывать реальный ip адрес руны
+
 Если не работает после перезапуска, то:
 ```shell
 docker-compose down
