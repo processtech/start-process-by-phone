@@ -1,0 +1,13 @@
+[Unit]
+Description=Сервис для sip автоответчика
+After=network-online.target
+
+[Service]
+ExecStart=sh /home/bpnm/_app_/entrypoint.sh
+WorkingDirectory=/home/bpnm/_app_
+
+TimeoutStopSec=8
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
