@@ -36,6 +36,7 @@ int run(std::string sipDomain, std::string sipUser, std::string sipPass, int sip
         // Init library
         EpConfig ep_cfg;
         ep_cfg.logConfig.level = 5;
+        ep_cfg.medConfig.noVad = true;
         if (!stunServer.empty())
             ep_cfg.uaConfig.stunServer.push_back(stunServer);
         endpoint.libInit(ep_cfg);
@@ -78,6 +79,7 @@ int run(std::string sipDomain, std::string sipUser, std::string sipPass, int sip
         acc_cfg.natConfig.turnUserName = "bbb30a550266a72a49e7a605";
         acc_cfg.natConfig.turnPassword = "mSldRKq68urWpup6";
         */
+
 
         AuthCredInfo aci("digest", "*", sipUser, 0, sipPass);
 

@@ -87,7 +87,7 @@ public class CommonWfeRestClient {
     }
 
 
-    public void startTaxiProcess(String processName, Map<String, Object> variables) {
+    public boolean startTaxiProcess(String processName, Map<String, Object> variables) {
         try {
             if (null == currentJWT) {
                 authenticate();
@@ -96,10 +96,20 @@ public class CommonWfeRestClient {
             int status = startProcess(processName, variables);
             if (HttpStatus.SC_UNAUTHORIZED == status) {
                 authenticate();
-                startProcess(processName, variables);
+                status= startProcess(processName, variables);
             }
+
+            if (status == HttpStatus.SC_OK || status == HttpStatus.SC_CREATED) {
+                log.info("✅ Процесс '{}' успешно запущен в RunaWFE", processName);
+                return true;
+            } else {
+                log.warn("⚠️ RunaWFE вернул статус: {}, процесс не запущен", status);
+                return false;
+            }
+
         } catch (Exception e) {
-            log.warn("", e);
+            log.error("! Критическая ошибка при взаимодействии с RunaWFE (процесс не запущен)", e);
+            return false;
         }
     }
 

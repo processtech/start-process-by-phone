@@ -10,18 +10,12 @@ public class StartState implements State {
 
     @Override
     public String initWords() {
-        return "Здравствуйте, это Сельское такси, откуда вас забрать?";
+        return "Здравствуйте, это Роботакси, откуда вас забрать?";
     }
 
     @Override
     public State calcNext(String speech) {
         context.setFrom(speech);
-
-        return new ConfirmState(
-                "Вы сказали: " + speech + ". Все Правильно?",
-                this,
-                new InputTargetAddressState(context),
-                context
-        );
+        return new InputTargetAddressState(context);
     }
 }
