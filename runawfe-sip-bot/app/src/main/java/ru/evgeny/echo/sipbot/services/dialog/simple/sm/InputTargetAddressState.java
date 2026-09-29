@@ -17,11 +17,6 @@ public class InputTargetAddressState implements State {
     public State calcNext(String speech) {
         context.setTo(speech);
 
-        return new ConfirmState(
-                "Вы сказали: " + speech + " ... Все Правильно?",
-                this,
-                new FinishState(context),
-                context
-        );
+        return  new FinishState(context);
     }
 }

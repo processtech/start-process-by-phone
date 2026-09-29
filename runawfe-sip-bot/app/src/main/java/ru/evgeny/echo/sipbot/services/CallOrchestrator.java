@@ -2,6 +2,7 @@ package ru.evgeny.echo.sipbot.services;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -26,15 +27,13 @@ public class CallOrchestrator {
 
     private final DialogFactory dialogFactory;
 
-    private int ttsRequestCount = 0;
-
     private final CrossBridge bridge = new CrossBridge();
 
     public CallOrchestrator(@Value("${app.sock.dir}") String sockDir,
-                            @Value("${app.sock.control}") String nameSockControl,
-                            STTService sttService,
-                            TTSService ttsService,
-                            DialogFactory dialogFactory) {
+            @Value("${app.sock.control}") String nameSockControl,
+            STTService sttService,
+            TTSService ttsService,
+            DialogFactory dialogFactory) {
         this.sockDir = sockDir;
         this.nameSockControl = nameSockControl.trim();
         this.sttService = sttService;
@@ -56,6 +55,8 @@ public class CallOrchestrator {
 
             bridge.setRtpSocket(rtpSocket);
 
+            final AtomicBoolean isFirstPhrase = new AtomicBoolean(true);
+
             Dialog dialog = dialogFactory.createSimpleDialog(rtpSocket.getCurrentClientSip(),
                     answer -> {
                         boolean needhang = false;
@@ -66,9 +67,22 @@ public class CallOrchestrator {
 
                         log.info("Answer: {}", answer);
 
-                        log.warn("!!! ВЫЗОВ TTS (Количество запросов к RhVoice увеличивается) для фразы: {}", answer);
-
                         byte[] sound = ttsService.synthesize(answer);
+                        // === ДОБАВЛЕНИЕ ВЕДУЩЕЙ ТИШИНЫ ДЛЯ ПЕРВОЙ ФРАЗЫ ===
+
+                        if (isFirstPhrase.compareAndSet(true, false)) {
+                            // 8000 Гц * 2 байта (16 бит) * 0.4 секунды = 6400 байт тишины (чуть увеличили для надежности)
+                            byte[] leadingSilence = new byte[6400];
+                            byte[] combinedSound = new byte[leadingSilence.length + sound.length];
+
+                            // Копируем тишину, затем реальный звук
+                            System.arraycopy(leadingSilence, 0, combinedSound, 0, leadingSilence.length);
+                            System.arraycopy(sound, 0, combinedSound, leadingSilence.length, sound.length);
+
+                            sound = combinedSound;
+                            log.info("Added 400ms leading silence to the first phrase to prevent audio pop");
+                        }
+
                         log.info("Sound {} bytes", sound.length);
                         bridge.sendAudio(sound);
 
@@ -105,5 +119,4 @@ public class CallOrchestrator {
     private void destroy() {
         bridge.closeTransformator();
     }
-
 }

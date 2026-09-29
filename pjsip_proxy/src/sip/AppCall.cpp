@@ -55,6 +55,8 @@ void AppCall::onCallMediaState(OnCallMediaStateParam& prm)
     PJ_UNUSED_ARG(prm);
 
     const CallInfo ci = getInfo();
+    // Дает сетевым буферам и кодекам время стабилизироваться
+    pj_thread_sleep(150);
 
     for (unsigned i = 0; i < ci.media.size(); i++)
     {

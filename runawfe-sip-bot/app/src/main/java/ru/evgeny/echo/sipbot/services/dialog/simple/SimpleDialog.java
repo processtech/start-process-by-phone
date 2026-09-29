@@ -35,13 +35,15 @@ public class SimpleDialog implements Dialog {
         this.systemAnswerConsumer = systemAnswerConsumer;
         this.worker = new Thread(() -> {
             log.info("Dialog started");
-            systemAnswerConsumer.accept(state.initWords());
+            systemAnswerConsumer.accept(state.initWords()); //Приветствие StartState
+            log.info("Speech started");
             while (!Thread.interrupted()) {
                 if (!phrases.isEmpty() && (lastPhraseTime + IMMUNITY_INTERVAL_MS < System.currentTimeMillis())) {
                     String speech = String.join("\n", phrases);
                     log.info("User: {}", speech);
                     state = state.calcNext(speech);
-                    systemAnswerConsumer.accept(state.initWords());
+                    //StartState ->InputTargetAddressState->FinishState
+                    systemAnswerConsumer.accept(state.initWords()); //InputTargetAddressState->FinishState
 
                     if (state instanceof FinishState) {
                         String phone = context.getPhone() != null ? context.getPhone() : "Неизвестный номер";
@@ -49,20 +51,36 @@ public class SimpleDialog implements Dialog {
                         String to = context.getTo() != null ? context.getTo() : "Неизвестно";
 
                         log.info("Taxi: {}, {} -> {}", phone, from, to);
-
+                        boolean isSuccess = false;
                         try {
-                            wfeRestClient.startTaxiProcess("Такси", Map.of(
+                            isSuccess = wfeRestClient.startTaxiProcess("Такси", Map.of(
                                     "Телефон", phone,
                                     "Адрес", "%s -=-> %s".formatted(context.getFrom(), context.getTo())
                             ));
-                            log.info("Запрос успешно отправлен в RunaWFE");
+                            log.info("Запрос был отправлен в RunaWFE");
                         } catch (Exception e) {
                             log.error("Ошибка при отправке запроса в RunaWFE", e);
                         }
+
+                        try {
+                            Thread.sleep(9100);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                        // Формируем итоговую фразу в зависимости от результата
+                        if (isSuccess) {
+                            log.info("Запрос успешно отправлен в RunaWFE.");
+                            systemAnswerConsumer.accept("Спасибо за обращение, ожидайте машину. " + Dialog.FINISH_TAG);
+                        } else {
+                            log.info("! Запрос неуспешно отправлен в RunaWFE");
+                            systemAnswerConsumer.accept("Извините, возникли технические проблемы. Пожалуйста, попробуйте позвонить позже. " + Dialog.FINISH_TAG);
+                        }
+
                         break;
                     } else {
                         phrases.clear();
                     }
+
                 } else {
                     // небольшая пауза, чтобы не нагружать процессор
                     LockSupport.parkNanos(10_000_000); // 10 мс

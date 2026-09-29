@@ -2,7 +2,7 @@ package ru.evgeny.echo.sipbot.services.dialog.simple.sm;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-
+@Deprecated
 @RequiredArgsConstructor
 public class ConfirmState implements State {
     private final String confirmMessage;
