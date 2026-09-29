@@ -63,7 +63,7 @@ public class SimpleDialog implements Dialog {
                         }
 
                         try {
-                            Thread.sleep(8500);
+                            Thread.sleep(9000);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                         }
